@@ -1,0 +1,44 @@
+# Local development
+#   docker compose up -d mysql        → MySQL อย่างเดียว (แล้วรัน backend/frontend ด้วย npm run dev)
+#   docker compose --profile full up  → MySQL + backend ใน container (ทดสอบ Dockerfile)
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hiwlaewq
+      MYSQL_USER: hiwlaewq
+      MYSQL_PASSWORD: hiwlaewq
+    ports:
+      - "3307:3306" # 3307 กันชนกับ MySQL ที่อาจติดตั้งไว้ในเครื่อง
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    profiles: ["full"]
+    build: ./backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: hiwlaewq
+      DB_PASSWORD: hiwlaewq
+      DB_NAME: hiwlaewq
+      JWT_SECRET: local-docker-secret-change-me
+      STORAGE_DRIVER: local
+      UPLOAD_DIR: /tmp/uploads
+    ports:
+      - "3000:3000"
+
+volumes:
+  mysql-data:

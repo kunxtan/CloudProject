@@ -1,0 +1,162 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Mali = ฟอนต์ไทยลายมือโค้งมน น่ารักแต่ยังอ่านง่าย · Fredoka = ตัวเลข/โลโก้ภาษาอังกฤษแบบกลมป้อม */
+  --font-sans: 'Mali', ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fredoka', 'Mali', ui-rounded, sans-serif;
+
+  /* ธีมชานมไข่มุก — 400 = ชานมเข้ม (ตกแต่ง), 500 = บราวน์ชูการ์ (พื้นปุ่ม: ตัวอักษรขาว 4.86:1 ผ่าน WCAG AA) */
+  --color-brand-50: #fdf7ef;
+  --color-brand-100: #faebd7;
+  --color-brand-200: #f4d3a8;
+  --color-brand-300: #ecb371;
+  --color-brand-400: #e08f3f;
+  --color-brand-500: #ad5c16;
+  --color-brand-600: #924c14;
+  --color-brand-700: #783f15;
+  --color-brand-800: #623417;
+  --color-brand-900: #4e2b16;
+
+  /* โทนน้ำตาลโกโก้ (ใช้แทน stone) — ความสว่างใกล้ stone เดิมแต่ละขั้น contrast ของตัวหนังสือจึงไม่ลดลง */
+  --color-cocoa-50: #fbf8f4;
+  --color-cocoa-100: #f4eee7;
+  --color-cocoa-200: #e8dfd5;
+  --color-cocoa-300: #d8cabd;
+  --color-cocoa-400: #978576; /* ≥ 3:1 บนพื้นขาว/ครีม — ใช้กับไอคอนและ placeholder, ตัวหนังสือใช้ 500 ขึ้นไป */
+  --color-cocoa-500: #7b695c;
+  --color-cocoa-600: #5c4b3f;
+  --color-cocoa-700: #493a30;
+  --color-cocoa-800: #33271f;
+  --color-cocoa-900: #251a13;
+  --color-cocoa-950: #150e0a;
+
+  --color-surface: #fbf8f4;
+
+  /* line-height ของหัวข้อใหญ่ — ค่า default ของ Tailwind (3xl = 1.2, 5xl = 1) ออกแบบมาสำหรับอักษรละติน
+     ภาษาไทยมีสระบน + วรรณยุกต์ซ้อนกัน (เช่น ที่ ปั้น) สูงกว่าตัวอักษรราว 1/3 → เผื่อที่ให้ไม่ชนบรรทัดอื่น */
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.45;
+  --text-3xl--line-height: 1.4;
+  --text-4xl--line-height: 1.3;
+  --text-5xl--line-height: 1.25;
+  --color-blush: #f6a99a;
+
+  /* มุมโค้งมนขึ้นทั้งระบบ (ค่า default ของ Tailwind: lg=0.5rem, xl=0.75rem, 2xl=1rem, 3xl=1.5rem) */
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+
+  /* เงาแบบ "สติกเกอร์" — ขอบล่างทึบ ทำให้ปุ่ม/การ์ดดูนูนป่อง ๆ */
+  --shadow-soft: 0 3px 0 0 var(--color-cocoa-200), 0 10px 24px -14px rgb(74 46 22 / 0.35);
+  --shadow-pop: 0 4px 0 0 var(--color-brand-700);
+  --shadow-pop-success: 0 4px 0 0 #064e3b; /* emerald-900 */
+  --shadow-pop-soft: 0 3px 0 0 var(--color-cocoa-200);
+
+  --animate-pop-in: pop-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-wiggle: wiggle 600ms ease-in-out;
+  /* เงาใต้มาสคอต: จังหวะเดียวกับ float (4s) — ชามขึ้น เงาหด/จาง */
+  --animate-shadow-breathe: shadow-breathe 4s ease-in-out infinite;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    /* ขนาดตัวอักษรฐานโตตามความกว้างจอ: 16px ที่จอ 1280px → 18px ที่จอ 1920px ขึ้นไป
+       Tailwind ใช้หน่วย rem เกือบทั้งหมด → ระยะห่าง/ปุ่ม/การ์ด/ไอคอน ขยายตามไปด้วยทั้งหน้า
+       ใช้ rem (อิงค่าที่ผู้ใช้ตั้งใน browser) ไม่ใช่ px ตายตัว → การซูมของ browser ยังทำงานปกติ */
+    font-size: clamp(1rem, 0.3125vw + 0.75rem, 1.125rem);
+    /* จองที่ให้ scrollbar ไว้เสมอ — ไม่งั้นหน้ายาว (มี scrollbar) กับหน้าสั้น (ไม่มี) กว้างไม่เท่ากัน
+       ทั้งหน้าจะขยับซ้ายขวา ~8px ทุกครั้งที่เปลี่ยนหน้า */
+    scrollbar-gutter: stable;
+    /* เมนูรูปโปรไฟล์ย้อมสีแถบ scrollbar ชั่วคราว → ให้จางเข้า/ออกพร้อม overlay */
+    transition: background-color 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  body {
+    @apply bg-cocoa-50 text-cocoa-900 antialiased;
+    /* ลายจุดไข่มุกจาง ๆ เป็นพื้นหลัง */
+    background-image: radial-gradient(circle, rgb(74 46 22 / 0.05) 2.5px, transparent 3px);
+    background-size: 30px 30px;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* truncate ของ Tailwind ใช้ overflow: hidden → ตัดทั้งแนวนอนและแนวตั้ง สระบน/วรรณยุกต์ของภาษาไทยเลยถูกตัดหัว
+   เปลี่ยนให้ตัดเฉพาะแนวนอน (ยังมี "…" ท้ายข้อความเหมือนเดิม) — เขียนนอก @layer เพื่อให้ชนะ utility ของ Tailwind */
+.truncate {
+  overflow: clip visible;
+  /* overflow: hidden ทำให้ flex/grid item หดได้ถึง 0 อัตโนมัติ แต่ clip ไม่ทำ → ต้องใส่เอง ไม่งั้นข้อความยาวดันกล่องจนล้น */
+  min-width: 0;
+}
+
+/* เม็ดไข่มุก — วงกลมสีน้ำตาลเข้มมีไฮไลต์มันวาว */
+.pearl {
+  border-radius: 9999px;
+  background: radial-gradient(circle at 32% 28%, #9b7a63 0 10%, #4a3226 34%, #1c120c 100%);
+  box-shadow: inset -2px -3px 4px rgb(0 0 0 / 0.25);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes shadow-breathe {
+  50% {
+    scale: 0.8;
+    opacity: 0.55;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+}
+
+/* ระหว่างมี overlay เบลอทับ (เมนูรูปโปรไฟล์): หยุดแอนิเมชันของหน้าข้างหลังทั้งหมด
+   backdrop-filter ต้องคำนวณเบลอใหม่ทุกครั้งที่ของข้างหลังขยับ → ถ้าไม่หยุด GPU ทำงานหนักตลอดเวลา */
+html[data-overlay-open] :is(header, main, footer) *,
+html[data-overlay-open] :is(header, main, footer) *::before,
+html[data-overlay-open] :is(header, main, footer) *::after {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-shadow-breathe,
+  .animate-pop-in,
+  .group:hover .group-hover\:animate-wiggle {
+    animation: none;
+  }
+}

@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+coverage/
+*.log
+
+# local uploads (STORAGE_DRIVER=local)
+backend/uploads/
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+backend/uploads-test/
+
+# เอกสารวางแผนภายในทีม (ไม่ขึ้น git)
+docs/
