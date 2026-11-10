@@ -1,0 +1,116 @@
+name: Deploy
+
+# push เข้า main → test → build/push image → rolling deploy EC2 → อัปโหลด frontend
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "infra/**"
+      - "**/*.md"
+  workflow_dispatch: # กดรันเองได้จากแท็บ Actions
+
+# deploy ทีละครั้ง (ไม่ยกเลิกตัวที่กำลังรัน ไม่งั้นเครื่องอาจค้างครึ่งๆ กลางๆ)
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # ขอ OIDC token จาก GitHub (ใช้แทน access key)
+  contents: read
+
+env:
+  AWS_REGION: ap-southeast-1
+  AWS_ROLE_ARN: arn:aws:iam::006062444337:role/hiwlaewq-github-deploy
+  ECR_REPOSITORY: hiwlaewq-backend
+  FRONTEND_BUCKET: hiwlaewq-frontend-006062444337
+  ASG_NAME: hiwlaewq-asg
+  IMAGE_TAG_PARAM: /hiwlaewq/image_tag
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  backend:
+    name: Deploy backend
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image (tag = git SHA)
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+        run: |
+          docker build -t "$IMAGE" ./backend
+          docker push "$IMAGE"
+
+      - name: Point EC2 at the new image
+        run: aws ssm put-parameter --name "$IMAGE_TAG_PARAM" --value "$GITHUB_SHA" --overwrite
+
+      - name: Rolling deploy (instance refresh)
+        run: |
+          ASG=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "$ASG_NAME" \
+                  --query 'AutoScalingGroups[0].AutoScalingGroupName' --output text)
+          if [ "$ASG" != "$ASG_NAME" ]; then
+            echo "::notice::ตอนนี้ไม่ได้เปิด stack app ไว้ — อัปเดต image tag แล้ว จะถูกใช้ตอน terraform apply ครั้งถัดไป"
+            exit 0
+          fi
+
+          # เปลี่ยนเครื่องทีละครึ่ง: เครื่องใหม่ต้องผ่าน health check ก่อน เครื่องเก่าถึงถูกถอด → ไม่มี downtime
+          ID=$(aws autoscaling start-instance-refresh --auto-scaling-group-name "$ASG_NAME" \
+                 --preferences '{"MinHealthyPercentage":50,"InstanceWarmup":120}' \
+                 --query InstanceRefreshId --output text)
+          echo "instance refresh: $ID"
+
+          for i in $(seq 1 60); do
+            STATUS=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name "$ASG_NAME" \
+                       --instance-refresh-ids "$ID" --query 'InstanceRefreshes[0].[Status,PercentageComplete]' --output text)
+            echo "[$i] $STATUS"
+            case "$STATUS" in
+              Successful*) exit 0 ;;
+              Failed*|Cancelled*|Rollback*) echo "::error::instance refresh ไม่สำเร็จ — ดู log ใน CloudWatch /hiwlaewq/backend"; exit 1 ;;
+            esac
+            sleep 20
+          done
+          echo "::error::รอ instance refresh เกิน 20 นาที"
+          exit 1
+
+  frontend:
+    name: Deploy frontend
+    needs: backend # ขึ้น API ใหม่ก่อน แล้วค่อยขึ้นหน้าเว็บที่เรียกใช้มัน
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # assets/* มี hash ในชื่อไฟล์ → cache ได้ 1 ปี · ที่เหลือ (index.html) → no-cache ผู้ใช้เห็นเวอร์ชันใหม่ทันที
+      # อัปโหลด assets ก่อน index.html และไม่ลบ assets เก่า → คนที่เปิดหน้าเก่าค้างไว้ยังโหลดไฟล์ได้ระหว่าง deploy
+      - name: Upload to S3
+        run: |
+          aws s3 sync dist/assets "s3://$FRONTEND_BUCKET/assets" --cache-control "public,max-age=31536000,immutable"
+          aws s3 sync dist "s3://$FRONTEND_BUCKET" --delete --exclude "assets/*" --cache-control "no-cache"

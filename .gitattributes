@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# สคริปต์ที่รันบน Linux ต้องเป็น LF เสมอ (CRLF ทำให้ bash พัง)
+*.sh text eol=lf
+*.tftpl text eol=lf

@@ -1,9 +1,9 @@
 name: CI
 
+# PR → รันที่นี่ · push เข้า main → deploy.yml เรียกไฟล์นี้ก่อน deploy (ไม่รันซ้ำ 2 รอบ)
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.ref }}
