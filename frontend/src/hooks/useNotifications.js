@@ -36,7 +36,7 @@ export function useNotifications(enabled) {
   const toast = useToast();
   const seen = useRef(null);
 
-  const { data, refresh } = usePolling(() => notificationApi.unread(), 5000, [], { enabled });
+  const { data, refresh } = usePolling(() => notificationApi.all(), 5000, [], { enabled });
 
   useEffect(() => {
     if (!enabled) seen.current = null;
@@ -54,6 +54,7 @@ export function useNotifications(enabled) {
     for (const n of [...data].reverse()) {
       if (seen.current.has(n.id)) continue;
       seen.current.add(n.id);
+      if (n.isRead) continue;
       if (n.type === 'near' && readyQueues.has(n.queueId)) continue;
       toast.push(n.message, n.type === 'ready' ? 'success' : 'info', { duration: n.type === 'ready' ? 15000 : 7000 });
       showBrowserNotification(n);
@@ -74,5 +75,8 @@ export function useNotifications(enabled) {
     refresh();
   }, [refresh]);
 
-  return { notifications: data ?? [], markRead, markAllRead };
+  const notifications = data ?? [];
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  return { notifications, unreadCount, markRead, markAllRead };
+
 }

@@ -41,6 +41,7 @@ export const staffApi = {
 
 export const notificationApi = {
   unread: () => data(api.get('/notifications', { params: { unread: true } })).then((d) => d.notifications),
+  all: () => data(api.get('/notifications', { params: { unread: false } })).then((d) => d.notifications),
   markRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.post('/notifications/read-all'),
 };
