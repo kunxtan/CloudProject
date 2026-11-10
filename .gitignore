@@ -24,3 +24,6 @@ backend/uploads-test/
 
 # เอกสารวางแผนภายในทีม (ไม่ขึ้น git)
 docs/
+
+# ค่าเฉพาะทีม (อีเมล ฯลฯ) — ดูตัวอย่างใน *.tfvars.example
+*.tfvars
