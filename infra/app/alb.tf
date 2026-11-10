@@ -32,10 +32,10 @@ resource "aws_lb_target_group" "app" {
   health_check {
     path                = "/api/health" # liveness: ไม่เช็ค DB (ดูเหตุผลใน health.controller.js)
     matcher             = "200"
-    interval            = 15
+    interval            = 10 # เครื่องพัง → ALB เลิกส่งงานให้ภายใน ~20 วินาที (10s × 2 ครั้ง)
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 2
   }
 }
 

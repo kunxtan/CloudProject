@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths-ignore:
       - "infra/**"
+      - "loadtest/**"
       - "**/*.md"
   workflow_dispatch: # กดรันเองได้จากแท็บ Actions
 
