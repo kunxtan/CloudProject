@@ -10,6 +10,12 @@ variable "github_repo" {
   default     = "kunxtan/CloudProject"
 }
 
+variable "github_repo_with_ids" {
+  description = "owner@<owner id>/repo@<repo id> — GitHub รูปแบบใหม่ใส่ ID ไว้ใน sub (กันคนลบ repo แล้วสร้างชื่อเดิมมาสวมรอย) ดูค่าจริงได้จาก CloudTrail event AssumeRoleWithWebIdentity"
+  type        = string
+  default     = "kunxtan@104011650/CloudProject@1448509496"
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
@@ -31,10 +37,14 @@ data "aws_iam_policy_document" "github_assume" {
     }
 
     # เฉพาะ push เข้า main ของ repo นี้ (PR / branch อื่น / repo อื่น assume ไม่ได้)
+    # รับทั้งรูปแบบเดิม (ชื่อล้วน) และรูปแบบใหม่ (ชื่อ@ID) ที่ GitHub ส่งมาจริง
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main"]
+      values = [
+        "repo:${var.github_repo}:ref:refs/heads/main",
+        "repo:${var.github_repo_with_ids}:ref:refs/heads/main",
+      ]
     }
   }
 }
