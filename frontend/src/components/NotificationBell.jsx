@@ -2,10 +2,11 @@ import { Bell, BellRing, Clock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { formatTime } from '../utils/format.js';
 
-export function NotificationBell({ notifications, onRead, onReadAll }) {
+export function NotificationBell({ notifications, unreadCount, onRead, onReadAll }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const count = notifications.length;
+  const count = unreadCount; // ตัวเลขบนกระดิ่ง = เฉพาะที่ยังไม่อ่าน
+  const total = notifications.length; // รายการทั้งหมดในกล่อง (รวมที่อ่านแล้ว)
 
   useEffect(() => {
     if (!open) return undefined;
@@ -41,25 +42,29 @@ export function NotificationBell({ notifications, onRead, onReadAll }) {
               </button>
             )}
           </div>
-          {count === 0 ? (
+          {total === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-cocoa-500">ไม่มีการแจ้งเตือนใหม่</p>
           ) : (
             <ul className="max-h-80 divide-y divide-cocoa-100 overflow-y-auto">
               {notifications.map((n) => (
-                <li key={n.id}>
-                  <button onClick={() => onRead(n.id)} className="flex w-full gap-3 px-4 py-3 text-left hover:bg-cocoa-50">
-                    {n.type === 'ready' ? (
-                      <BellRing className="mt-0.5 size-5 shrink-0 text-brand-500" aria-hidden />
-                    ) : (
-                      <Clock className="mt-0.5 size-5 shrink-0 text-brand-400" aria-hidden />
-                    )}
-                    <span className="flex-1">
-                      <span className="block text-sm text-cocoa-800">{n.message}</span>
-                      <span className="mt-0.5 block text-xs text-cocoa-500">{formatTime(n.createdAt)}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
+  <li key={n.id}>
+    <button
+      onClick={() => !n.isRead && onRead(n.id)}
+      className={`flex w-full gap-3 px-4 py-3 text-left hover:bg-cocoa-50 ${n.isRead ? 'opacity-60' : ''}`}
+    >
+      {n.type === 'ready' ? (
+        <BellRing className={`mt-0.5 size-5 shrink-0 ${n.isRead ? 'text-cocoa-400' : 'text-brand-500'}`} aria-hidden />
+      ) : (
+        <Clock className={`mt-0.5 size-5 shrink-0 ${n.isRead ? 'text-cocoa-400' : 'text-brand-400'}`} aria-hidden />
+      )}
+      <span className="flex-1">
+        <span className={`block text-sm ${n.isRead ? 'text-cocoa-500' : 'font-medium text-cocoa-800'}`}>{n.message}</span>
+        <span className="mt-0.5 block text-xs text-cocoa-500">{formatTime(n.createdAt)}</span>
+      </span>
+      {!n.isRead && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" aria-label="ยังไม่อ่าน" />}
+    </button>
+  </li>
+))}
             </ul>
           )}
         </div>
