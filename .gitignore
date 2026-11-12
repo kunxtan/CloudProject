@@ -22,8 +22,10 @@ Thumbs.db
 !.vscode/extensions.json
 backend/uploads-test/
 
-# เอกสารวางแผนภายในทีม (ไม่ขึ้น git)
-docs/
+# เอกสารวางแผนภายในทีม (ไม่ขึ้น git) — ยกเว้น runbook และ ADR
+docs/*
+!docs/runbook.md
+!docs/decisions/
 
 # ค่าเฉพาะทีม (อีเมล ฯลฯ) — ดูตัวอย่างใน *.tfvars.example
 *.tfvars
