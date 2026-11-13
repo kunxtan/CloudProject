@@ -44,7 +44,7 @@ export function Logo({ compact = false }) {
 export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { notifications, markRead, markAllRead } = useNotifications(user?.role === 'customer');
+ const { notifications, unreadCount, markRead, markAllRead } = useNotifications(user?.role === 'customer');
   const items = navItemsFor(user?.role);
   const headerRef = useRef(null);
 
@@ -83,7 +83,7 @@ export function Layout() {
             {user ? (
               <>
                 {user.role === 'customer' && (
-                  <NotificationBell notifications={notifications} onRead={markRead} onReadAll={markAllRead} />
+                 <NotificationBell notifications={notifications} unreadCount={unreadCount} onRead={markRead} onReadAll={markAllRead} />
                 )}
                 <UserMenu user={user} onLogout={onLogout} />
               </>
