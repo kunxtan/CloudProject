@@ -66,7 +66,7 @@ export default function RestaurantSearchPage() {
         <div className="w-full min-w-0 text-center sm:w-auto sm:text-left">
           <Greeting />
           <h1 className="text-[1.75rem] font-bold text-white drop-shadow-[0_2px_0_rgb(98_52_23/0.45)] min-[400px]:text-3xl sm:text-4xl lg:text-5xl">
-            หิวแล้วใช่ไหม?
+            หิวแล้วอะดิ้ อิอิ
           </h1>
           <p className="mx-auto mt-1.5 max-w-md text-xs text-brand-50 sm:mx-0 sm:text-sm lg:max-w-xl">จองคิวร้านโปรดได้จากทุกที่ ดูคิวแบบเรียลไทม์</p>
 
